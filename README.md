@@ -1,2 +1,2 @@
 # ArchLinux-Install
-Shell script auto install Arch Linux
+Bash script to the auto install Arch Linux/
