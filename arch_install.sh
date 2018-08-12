@@ -15,17 +15,17 @@ MKINITCPIO='/etc/mkinitcpio.conf'
 SLIM='/etc/slim.conf'
 SLIM_THEME='archlinux-simplyblack'
 DEFAULT_GRUB='/etc/default/grub'
-SDA=''
+SD=''
 BOOT=''
 ROOT=''
 HOME=''
 SWAP=''
-COMPNAME=''
+#COMPNAME=''
 USER=''
-OPTION=''
+#OPTION=''
 # Меню, постоянный цикл
 PS3='Bash shell archlinux install:'
-OPTIONS=("Ru_Options_Set" "Fdisk" "Format_sda" "Mount" "Pacman_Update" "Pacstrap" "Gen_fstab" "Chroot" "Comp_Name" "RU" "GRUB" "Passwd_on_root" "Dhcpcd_Enable" "User_add" "Xorg_and_Video" "Alsa" "DE" "Spectre-Meltdown=OFF" "FAQ" "Quit")
+OPTIONS=("Ru_Options_Set" "Fdisk" "Format_sd" "Mount" "Pacman_Update" "Pacstrap" "Gen_fstab" "Chroot" "Comp_Name" "RU" "GRUB" "Passwd_on_root" "Dhcpcd_Enable" "User_add" "Xorg_and_Video" "Alsa" "DE" "Spectre-Meltdown=OFF" "FAQ" "Quit")
 select OPT in "${OPTIONS[@]}"
 do
     case $OPT in
@@ -45,49 +45,46 @@ do
 			fi
 			
 			if [[ "2" = "$OPTION" ]]; then
-				while [[ "$SDA" = "" ]]; do
+				while [[ "$SD" = "" ]]; do
 					echo "Какой диск будем разбивать на разделы?"
-					read -p "Введите /dev/sdx: " SDA
+					read -p "Введите sd(x): " SD
 				done
 
-				if [[ -n "$SDA" ]]; then
-					fdisk $SDA
+				if [[ -n "$SD" ]]; then
+					fdisk /dev/$SD
 				fi
 			fi
 		;;
-		"Format_sda")
+		"Format_sd")
 			while [[ "$BOOT" = "" ]]; do
-				echo "Укажите раздел под BOOT?"
-				read -p "Введите sdXX: " BOOT
+				echo "Укажите раздел под BOOT."
+				read -p "Введите No. раздела: " BOOT
 			done
 
 			while [[ "$ROOT" = "" ]]; do
-				echo "Укажите раздел под ROOT?"
-				read -p "Введите sdXX: " ROOT
+				echo "Укажите раздел под ROOT."
+				read -p "Введите No. раздела: " ROOT
 			done
 
 			while [[ "$HOME" = "" ]]; do
-				echo "Укажите раздел под HOME?"
-				read -p "Введите sdXX: " HOME
+				echo "Укажите раздел под HOME."
+				read -p "Введите No. раздела: " HOME
 			done
 
 			while [[ "$SWAP" = "" ]]; do
-				echo "Укажите раздел под SWAP?"
-				read -p "Введите sdXX: " SWAP
+				echo "Укажите раздел под SWAP."
+				read -p "Введите No. раздела: " SWAP
 			done
 
 			if [[ -n "$BOOT" && "$ROOT" && "$HOME" && "$SWAP" ]]; then
-				mkfs.ext2 -L boot /dev/$BOOT && mkfs.ext4 -L root /dev/$ROOT && mkfs.ext4 -L home /dev/$HOME && mkswap -L swap /dev/$SWAP
+				mkfs.ext2 -L boot /dev/$SD$BOOT && mkfs.ext4 -L root /dev/$SD$ROOT && mkfs.ext4 -L home /dev/$SD$HOME && mkswap -L swap /dev/$SD$SWAP
 				echo "Готово!"
 			fi
 		;;
 		"Mount")
-			echo "Монтируем разделы:"
-			mount $ROOT /mnt
-			mkdir /mnt/{boot,home}
-			mount $BOOT /mnt/boot
-			mount $HOME /mnt/home
-			swapon $SWAP
+			echo "Монтируем разделы: [boot: $SD$BOOT], [root: $SD$ROOT], [home: $SD$HOME], [swap: $SD$SWAP]."
+			mount /dev/$SD$ROOT /mnt && mkdir /mnt/{boot,home} && mount /dev/$SD$BOOT /mnt/boot && mount /dev/$SD$HOME /mnt/home && swapon /dev/$SD$SWAP
+			echo "Успешно!"
 		;;
 		"Pacman_Update")
 			sed -i ''$LINE_MIRRORLIST'd' $MIRRORLIST # Удаляем диапазон строк;
@@ -151,6 +148,7 @@ do
 			done
 		;;
 		"Xorg_and_Video")
+			echo "Устанавливаем сначала драйвер, а затем X-Server."
 			echo "1) Установить X-Server"
 			echo "2) Драйвер Nvidia"
 			echo "3) Драйвер Intel"
@@ -206,9 +204,6 @@ do
 			echo "umount -R /mnt"
 			echo "swapoff /dev/sdxx"
 			echo "- и извлечь установочный образ."
-			echo "|-----------------------------|"
-			echo "Xorg_and_Video"
-			echo "Устанавливаем сначала драйвер, а затем иксы."
 		;;
         "Quit")
             break
